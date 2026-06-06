@@ -34,106 +34,152 @@ const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const ambient=new THREE.AmbientLight(0xffffff,1.5);
+const ambient=new THREE.AmbientLight(0xffffff,1.8);
 scene.add(ambient);
 
-const light=new THREE.PointLight(0xff99dd,40,100);
+const light=new THREE.PointLight(0xff99dd,50,100);
 light.position.set(5,8,5);
 scene.add(light);
 
-function createDahlia(color){
- const group=new THREE.Group();
+function createPetal(hueShift){
+  const petalGeo = new THREE.ConeGeometry(0.3, 0.8, 16, 8);
+  
+  // Crear material con gradiente
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  
+  const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+  const baseHue = (hueShift + 270) % 360;
+  gradient.addColorStop(0, `hsl(${baseHue}, 100%, 70%)`);
+  gradient.addColorStop(0.5, `hsl(${baseHue}, 85%, 55%)`);
+  gradient.addColorStop(1, `hsl(${baseHue}, 100%, 40%)`);
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 256, 256);
+  
+  const texture = new THREE.CanvasTexture(canvas);
+  const petalMat = new THREE.MeshStandardMaterial({
+    map: texture,
+    metalness: 0.2,
+    roughness: 0.4
+  });
+  
+  const petal = new THREE.Mesh(petalGeo, petalMat);
+  petal.castShadow = true;
+  petal.receiveShadow = true;
+  
+  return petal;
+}
 
- for(let layer=0;layer<7;layer++){
-   const petals=18+layer*3;
-   for(let i=0;i<petals;i++){
-      const petal=new THREE.Mesh(
-        new THREE.SphereGeometry(.25,.25,12),
-        new THREE.MeshStandardMaterial({
-          color:color,
-          emissive:color,
-          emissiveIntensity:.15
-        })
-      );
-      const r=.5+layer*.25;
-      const a=(i/petals)*Math.PI*2;
-      petal.position.set(Math.cos(a)*r,layer*.08,Math.sin(a)*r);
-      petal.scale.set(1.2,.35,2);
-      petal.lookAt(0,0,0);
+function createDahlia(baseHue){
+  const group = new THREE.Group();
+  
+  const layerCount = 8;
+  const petalsByLayer = [8, 10, 12, 14, 16, 18, 20, 24];
+  
+  for(let layer = 0; layer < layerCount; layer++){
+    const petals = petalsByLayer[layer];
+    const radius = 0.3 + layer * 0.25;
+    const height = 0.3 + layer * 0.05;
+    
+    for(let i = 0; i < petals; i++){
+      const petal = createPetal(baseHue + layer * 5);
+      
+      const angle = (i / petals) * Math.PI * 2;
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      
+      petal.position.set(x, height, z);
+      petal.rotation.x = -Math.PI * 0.3 - layer * 0.1;
+      petal.rotation.z = angle;
+      petal.scale.set(1 - layer * 0.05, 0.8 - layer * 0.02, 1);
+      
       group.add(petal);
-   }
- }
- const center=new THREE.Mesh(
-   new THREE.SphereGeometry(.25,16,16),
-   new THREE.MeshStandardMaterial({color:0xffdd66})
- );
- group.add(center);
- return group;
+    }
+  }
+  
+  // Centro de la flor
+  const centerGeo = new THREE.SphereGeometry(0.35, 32, 32);
+  const centerMat = new THREE.MeshStandardMaterial({
+    color: 0x4a1a4a,
+    emissive: 0x6b2d6b,
+    emissiveIntensity: 0.3,
+    roughness: 0.3
+  });
+  const center = new THREE.Mesh(centerGeo, centerMat);
+  center.position.y = 2.5;
+  center.castShadow = true;
+  center.receiveShadow = true;
+  group.add(center);
+  
+  return group;
 }
 
-const colors=[0xff77bb,0xff4d6d,0xc084fc,0xffffff];
-const flowers=[];
+const baseHues = [270, 280, 290, 300, 310, 320, 0, 15];
+const flowers = [];
 
-for(let i=0;i<8;i++){
- const f=createDahlia(colors[i%colors.length]);
- f.position.set((Math.random()-.5)*12,(Math.random()-.5)*5,(Math.random()-.5)*8);
- scene.add(f);
- flowers.push(f);
+for(let i = 0; i < 8; i++){
+  const f = createDahlia(baseHues[i]);
+  f.position.set((Math.random()-.5)*12, (Math.random()-.5)*5, (Math.random()-.5)*8);
+  scene.add(f);
+  flowers.push(f);
 }
 
-const starGeo=new THREE.BufferGeometry();
-const starCount=1000;
-const pos=[];
-for(let i=0;i<starCount;i++){
- pos.push((Math.random()-.5)*60,(Math.random()-.5)*60,(Math.random()-.5)*60);
+const starGeo = new THREE.BufferGeometry();
+const starCount = 1000;
+const pos = [];
+for(let i = 0; i < starCount; i++){
+  pos.push((Math.random()-.5)*60, (Math.random()-.5)*60, (Math.random()-.5)*60);
 }
-starGeo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-const stars=new THREE.Points(starGeo,new THREE.PointsMaterial({size:.08}));
+starGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({size:.08}));
 scene.add(stars);
 
-const butterflies=[];
-for(let i=0;i<6;i++){
- const b=new THREE.Mesh(
-  new THREE.BoxGeometry(.15,.08,.02),
-  new THREE.MeshBasicMaterial({color:0x88ccff})
- );
- scene.add(b);
- butterflies.push({mesh:b,offset:Math.random()*10});
+const butterflies = [];
+for(let i = 0; i < 6; i++){
+  const b = new THREE.Mesh(
+    new THREE.BoxGeometry(.15, .08, .02),
+    new THREE.MeshBasicMaterial({color: 0x88ccff})
+  );
+  scene.add(b);
+  butterflies.push({mesh: b, offset: Math.random()*10});
 }
 
-let t=0;
+let t = 0;
 function animate(){
- requestAnimationFrame(animate);
- t+=0.01;
-
- flowers.forEach((f,i)=>{
-   f.rotation.y+=0.003;
-   f.position.y+=Math.sin(t+i)*0.003;
- });
-
- butterflies.forEach((b,i)=>{
-   b.mesh.position.set(
-     Math.sin(t+b.offset)*5,
-     Math.cos(t*1.5+b.offset)*2,
-     Math.cos(t+b.offset)*3
-   );
- });
-
- camera.position.x=Math.sin(t*0.3)*1.5;
- camera.lookAt(0,0,0);
-
- renderer.render(scene,camera);
+  requestAnimationFrame(animate);
+  t += 0.01;
+  
+  flowers.forEach((f, i) => {
+    f.rotation.y += 0.001;
+    f.position.y += Math.sin(t + i) * 0.002;
+  });
+  
+  butterflies.forEach((b, i) => {
+    b.mesh.position.set(
+      Math.sin(t + b.offset) * 5,
+      Math.cos(t * 1.5 + b.offset) * 2,
+      Math.cos(t + b.offset) * 3
+    );
+  });
+  
+  camera.position.x = Math.sin(t * 0.3) * 1.5;
+  camera.lookAt(0, 0, 0);
+  
+  renderer.render(scene, camera);
 }
 animate();
 
-addEventListener('resize',()=>{
- camera.aspect=innerWidth/innerHeight;
- camera.updateProjectionMatrix();
- renderer.setSize(innerWidth,innerHeight);
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
 });
 
-document.getElementById('btn').onclick=()=>{
- document.getElementById('msg').classList.add('show');
+document.getElementById('btn').onclick = () => {
+  document.getElementById('msg').classList.add('show');
 };
 </script>
 </body>
