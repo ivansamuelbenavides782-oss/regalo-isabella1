@@ -4,12 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Para vos, Isabella 🌸</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
 html,body{margin:0;height:100%;overflow:hidden;background:#080510;color:white;font-family:Arial,sans-serif}
 #overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;z-index:5;pointer-events:none}
 h1{font-size:clamp(2.5rem,7vw,5rem);margin:0;text-shadow:0 0 20px rgba(255,255,255,.6)}
 p{font-size:clamp(1rem,2vw,1.3rem);max-width:700px;padding:0 20px}
-#btn{pointer-events:auto;margin-top:18px;padding:14px 28px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:white;cursor:pointer}
+#btn{pointer-events:auto;margin-top:18px;padding:14px 28px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:white;cursor:pointer;font-size:1rem}
 #msg{opacity:0;transition:1s}
 .show{opacity:1!important}
 </style>
@@ -22,9 +23,7 @@ p{font-size:clamp(1rem,2vw,1.3rem);max-width:700px;padding:0 20px}
 <p id="msg">No encontré flores tan lindas como vos, pero estas se acercan bastante 😌</p>
 </div>
 
-<script type="module">
-import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
-
+<script>
 const scene=new THREE.Scene();
 scene.fog=new THREE.Fog(0x12051d,10,45);
 
